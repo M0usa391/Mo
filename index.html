@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مدير الوصفات</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.css">
+<style>
+  body { font-family: Arial, sans-serif; transition: background-color 0.5s; }
+  .container { width: 80%; margin: auto; text-align: center; }
+  .dark-mode { background-color: #333; color: white; }
+  .light-mode { background-color: #fff; color: black; }
+  input, textarea, button { margin: 10px 0; padding: 10px; border-radius: 5px; border: 1px solid #ddd; width: 90%; }
+  button { background-color: #8ecae6; color: white; border: none; cursor: pointer; }
+  button:hover { background-color: #219ebc; }
+  .fa { margin-right: 10px; }
+  .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; -webkit-transition: .4s; transition: .4s; }
+  .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; -webkit-transition: .4s; transition: .4s; }
+  input:checked + .slider { background-color: #219ebc; }
+  input:focus + .slider { box-shadow: 0 0 1px #219ebc; }
+  input:checked + .slider:before { -webkit-transform: translateX(26px); -ms-transform: translateX(26px); transform: translateX(26px); }
+  .slider.round { border-radius: 34px; }
+  .slider.round:before { border-radius: 50%; }
+</style>
+</head>
+<body class="light-mode">
+<div class="container">
+  <h1>مدير الوصفات</h1>
+  <label class="switch">
+    <input type="checkbox" id="toggleMode">
+    <span class="slider round"></span>
+  </label>
+  <div>
+    <i class="fa fa-plus"></i>
+    <input type="text" id="mealName" placeholder="اسم الوجبة">
+    <textarea id="recipeDescription" placeholder="وصف الوجبة"></textarea>
+    <button onclick="addRecipe()">إضافة وصفة</button>
+  </div>
+  <div>
+    <i class="fa fa-search"></i>
+    <input type="text" id="search" placeholder="ابحث عن وصفة">
+    <button onclick="searchRecipe()">بحث</button>
+  </div>
+  <div id="recipes"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/js/all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
+<script>
+// تحقق من وجود الوصفات في الـ Local Storage
+function getRecipes() {
+  return JSON.parse(localStorage.getItem('recipes')) || [];
+}
+
+// إضافة وصفة جديدة
+function addRecipe() {
+  const name = document.getElementById('mealName').value.trim();
+  const description = document.getElementById('recipeDescription').value.trim();
+  if (!name || !description) {
+    swal("خطأ", "لا يمكن ترك حقول الاسم أو الوصف فارغة", "error");
+    return;
+  }
+  const recipes = getRecipes();
+  const existing = recipes.find(r => r.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    swal("خطأ", "الوصفة موجودة بالفعل", "error");
+    return;
+  }
+  recipes.push({ name, description });
+  localStorage.setItem('recipes', JSON.stringify(recipes));
+  document.getElementById('mealName').value = '';
+  document.getElementById('recipeDescription').value = '';
+  swal("تم!", "تم إضافة الوصفة بنجاح", "success");
+}
+
+// البحث عن وصفة
+function searchRecipe() {
+  const searchTerm = document.getElementById('search').value.toLowerCase();
+  if (searchTerm) {
+    const recipes = getRecipes();
+    const filteredRecipes = recipes.filter(r => r.name.toLowerCase().includes(searchTerm));
+    displayRecipes(filteredRecipes);
+  } else {
+    swal("تنبيه", "يرجى كتابة اسم الوجبة للبحث", "info");
+  }
+}
+
+// عرض الوصفات
+function displayRecipes(recipes) {
+  const recipesList = document.getElementById('recipes');
+  recipesList.innerHTML = '';
+  recipes.forEach((r, index) => {
+    recipesList.innerHTML += `<div>${r.name}: ${r.description}<button onclick="deleteRecipe(${index})">حذف</button></div>`;
+  });
+}
+
+// حذف وصفة
+function deleteRecipe(index) {
+  const recipes = getRecipes();
+  recipes.splice(index, 1);
+  localStorage.setItem('recipes', JSON.stringify(recipes));
+  displayRecipes(recipes);
+}
+
+// تبديل وضع الليلي/النهاري
+document.getElementById('toggleMode').addEventListener('change', function() {
+  document.body.classList.toggle('dark-mode', this.checked);
+  document.body.classList.toggle('light-mode', !this.checked);
+});
+
+// عند تحميل الصفحة، لا تعرض أي وصفات
+window.onload = function() {
+  displayRecipes(getRecipes());
+};
+</script>
+</body>
+</html>
